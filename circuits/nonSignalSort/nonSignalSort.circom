@@ -29,7 +29,7 @@ template NonSignalSort(LEN, BITS){
 
     for(var i = 0; i < LEN; i++){
         out[i] <-- arr[i];
-        log(out[i]);
+        // log(out[i]);
     }
     //check if sorted and the same array
     component isLess[LEN-1];

@@ -5,3 +5,4 @@ node_modules
 *.dev.*
 dev
 dev.*
+!tests/tests/inputs/*

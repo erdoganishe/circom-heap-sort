@@ -2,11 +2,11 @@ pragma circom  2.1.9;
 
 include "circomlib/circuits/comparators.circom";
 
-template MaxToRight(LEN, BITS, left, right){
-    signal input in[LEN];
-    signal output out[LEN];
+template MaxToRight(EXTENDED_LEN, BITS, left, right){
+    signal input in[EXTENDED_LEN];
+    signal output out[EXTENDED_LEN];
 
-    for (var i = 0; i < LEN; i++){
+    for (var i = 0; i < EXTENDED_LEN; i++){
         if (i!=right && i!=left ){
             out[i]<==in[i];
         }
@@ -27,10 +27,10 @@ template MaxToRight(LEN, BITS, left, right){
 
 }
 
-template SwapWithZero(LEN, right){
-    signal input in[LEN];
-    signal output out[LEN];
-    for (var i = 1; i < LEN; i++){
+template SwapWithZero(EXTENDED_LEN, right){
+    signal input in[EXTENDED_LEN];
+    signal output out[EXTENDED_LEN];
+    for (var i = 1; i < EXTENDED_LEN; i++){
         if (i!=right){
             out[i]<==in[i];
         }
@@ -42,16 +42,16 @@ template SwapWithZero(LEN, right){
 
 }
 
-template Heapify(LEN, BITS, LEVELS, sorted_on_levels){
-    signal input in[LEN];
-    signal output out[LEN];
+template Heapify(EXTENDED_LEN, BITS, LEVELS, sorted_on_levels){
+    signal input in[EXTENDED_LEN];
+    signal output out[EXTENDED_LEN];
 
     component processLevel[LEVELS - 1];
 
     var process_level_counter = 0;
 
     for( var i = LEVELS-1; i > 0; i--){
-        processLevel[process_level_counter] = ProcessLevel(LEN, BITS, i, sorted_on_levels[i]);
+        processLevel[process_level_counter] = ProcessLevel(EXTENDED_LEN, BITS, i, sorted_on_levels[i]);
         if (process_level_counter == 0){
             processLevel[0].in <== in;
         } else {
@@ -64,16 +64,16 @@ template Heapify(LEN, BITS, LEVELS, sorted_on_levels){
         num_sorted += sorted_on_levels[i];
 
     }
-    component lastSwap = SwapWithZero(LEN, LEN - num_sorted - 1);
+    component lastSwap = SwapWithZero(EXTENDED_LEN, EXTENDED_LEN - num_sorted - 1);
     lastSwap.in <== processLevel[LEVELS - 2].out;
 
     out <== lastSwap.out;
 }
 
-template ProcessLevel(LEN,BITS, level, num_sorted){
+template ProcessLevel(EXTENDED_LEN,BITS, level, num_sorted){
     assert(level >= 1);
-    signal input in[LEN];
-    signal output out[LEN];
+    signal input in[EXTENDED_LEN];
+    signal output out[EXTENDED_LEN];
 
 
     if (num_sorted == 2**level){
@@ -91,7 +91,7 @@ template ProcessLevel(LEN,BITS, level, num_sorted){
         component maxToRight[SWAPS_NEEDED];
 
         for (var i = 2**level - 1; i < 2**(level+1) - 1 - num_sorted%2 - num_sorted; i+=2){
-            maxToRight[swap_counter] = MaxToRight(LEN, BITS, i, i+1);
+            maxToRight[swap_counter] = MaxToRight(EXTENDED_LEN, BITS, i, i+1);
             if (swap_counter == 0){
                 maxToRight[swap_counter].in <== in;
             } else {
@@ -100,12 +100,12 @@ template ProcessLevel(LEN,BITS, level, num_sorted){
             swap_counter++;
         }
         for (var i = 2**level; i < 2**(level+1) - 1 - num_sorted; i+=2){
-            maxToRight[swap_counter] = MaxToRight(LEN, BITS, i, (i-1)\2);
+            maxToRight[swap_counter] = MaxToRight(EXTENDED_LEN, BITS, i, (i-1)\2);
             maxToRight[swap_counter].in <== maxToRight[swap_counter-1].out;
             swap_counter++;
         }
         if (num_sorted % 2 == 1){
-            maxToRight[SWAPS_NEEDED-1] = MaxToRight(LEN, BITS, 2**(level+1)-2-num_sorted, (2**(level+1)-3-num_sorted)\2);
+            maxToRight[SWAPS_NEEDED-1] = MaxToRight(EXTENDED_LEN, BITS, 2**(level+1)-2-num_sorted, (2**(level+1)-3-num_sorted)\2);
             if (SWAPS_NEEDED == 1){
                 maxToRight[0].in <== in;
             }
@@ -120,20 +120,20 @@ template ProcessLevel(LEN,BITS, level, num_sorted){
 
 }
 
-template HeapSort(len, BITS){
+template HeapSort(LEN, BITS){
 
-    assert(len >= 2);
+    assert(LEN >= 2);
 
-    signal input in[len];
-    signal output out[len];
+    signal input in[LEN];
+    signal output out[LEN];
 
     var LEVELS = 1;
-    while (2**LEVELS < len){
+    while (2**LEVELS <= LEN){
         LEVELS++;
     }
-    var LEN = 2**LEVELS - 1;
+    var EXTENDED_LEN = 2**LEVELS - 1;
 
-    var num_sorted = LEN-len;
+    var num_sorted = EXTENDED_LEN-LEN;
     var sorted_on_levels[LEVELS];
     var current_level = LEVELS-1;
     for (var i = 0; i < LEVELS-1; i++){
@@ -141,18 +141,18 @@ template HeapSort(len, BITS){
     }
     sorted_on_levels[LEVELS-1] = num_sorted;
 
-    signal startingArr[LEN];
-    for (var i = 0; i < len; i++){
+    signal startingArr[EXTENDED_LEN];
+    for (var i = 0; i < LEN; i++){
         startingArr[i] <== in[i]; 
     }
-    for (var i = len; i < LEN; i++){
+    for (var i = LEN; i < EXTENDED_LEN; i++){
         startingArr[i] <== 0;
     }
 
-    component heapify[len-1];
+    component heapify[LEN-1];
 
-    for (var i = 0; i < len-1; i++){
-        heapify[i] = Heapify(LEN, BITS, LEVELS, sorted_on_levels);
+    for (var i = 0; i < LEN-1; i++){
+        heapify[i] = Heapify(EXTENDED_LEN, BITS, LEVELS, sorted_on_levels);
         if (i == 0) {
             heapify[i].in <== startingArr;
         }
@@ -164,8 +164,8 @@ template HeapSort(len, BITS){
             current_level--;
         } 
     }
-    for (var i = 0; i < len; i++){
-        out[i] <== heapify[len-2].out[i];
-        log(out[i]);
+    for (var i = 0; i < LEN; i++){
+        out[i] <== heapify[LEN-2].out[i];
+        // log(out[i]);
     }
 }
