@@ -1,6 +1,7 @@
 pragma circom  2.1.6;
 
 include "circomlib/circuits/comparators.circom";
+include "circomlib/circuits/bitify.circom";
 
 function swap (arr, left, right) {
     var tmp = arr[left];
@@ -14,6 +15,12 @@ template NonSignalSort(LEN, BITS){
 
     signal input in[LEN];
     signal output out[LEN];
+
+    component bitLengthCheck[LEN];
+    for(var i = 0; i < LEN; i++){
+        bitLengthCheck[i] = Num2Bits(BITS);
+        bitLengthCheck[i].in <== in[i];
+    }
 
     var arr[LEN];
     for(var i = 0; i < LEN; i++){
